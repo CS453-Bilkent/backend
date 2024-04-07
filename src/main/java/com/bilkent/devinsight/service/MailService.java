@@ -32,7 +32,7 @@ public class MailService {
 
     @Async
     public void sendVerifyMailAddressEmail(VerifyMailAddressDto verifyMailAddressDto) {
-        String subject = "MeetTime Email Verification";
+        String subject = "DevInsight Email Verification";
         String message = "Hi " + verifyMailAddressDto.getName() + "!\n" +
                 "Your account has been registered.\n" +
                 "Please use the code below to verify your email: \n" +
@@ -50,7 +50,7 @@ public class MailService {
 
 //    @Async
 //    public void sendForgotPasswordEmail(ForgotPasswordEmailDto forgotPasswordEmailDto) {
-//        String subject = forgotPasswordEmailDto.getCode() + " is your MeetTime Forgot Password Code";
+//        String subject = forgotPasswordEmailDto.getCode() + " is your DevInsight Forgot Password Code";
 //        String message = "Hi " + forgotPasswordEmailDto.getName() + "!\n" +
 //                "You are receiving this email because you requested to change your password.\n" +
 //                "This code is valid for 1 hour. After that, it will be expired.\n" +
@@ -67,7 +67,7 @@ public class MailService {
 
     @Async
     public void sendChangeMailAddressEmail(ChangeMailAddressEmailDto changeMailAddressEmailDto) {
-        String subject = changeMailAddressEmailDto.getCode() + " is your MeetTime Change Email Code";
+        String subject = changeMailAddressEmailDto.getCode() + " is your DevInsight Change Email Code";
         String message = "Hi " + changeMailAddressEmailDto.getName() + "!\n" +
                 "You are receiving this email because you requested to change your email to " +
                 changeMailAddressEmailDto.getNewEmail() + ".\n" +
@@ -85,7 +85,7 @@ public class MailService {
 
     @Async
     public void sendVerifyChangeMailAddressEmail(ChangeMailAddressEmailDto changeMailAddressEmailDto) {
-        String subject = changeMailAddressEmailDto.getCode() + " is your MeetTime Change Email Code";
+        String subject = changeMailAddressEmailDto.getCode() + " is your DevInsight Change Email Code";
         String message = "Hi " + changeMailAddressEmailDto.getName() + "!\n" +
                 "You are receiving this email because you requested to change your email from " +
                 changeMailAddressEmailDto.getEmail() + ".\n" +
@@ -104,7 +104,7 @@ public class MailService {
 
     @Async
     public void sendResetPasswordEmail(ResetPasswordEmailDto resetPasswordEmailDto) {
-        String subject = resetPasswordEmailDto.getCode() + " is your MeetTime Password Reset Code";
+        String subject = resetPasswordEmailDto.getCode() + " is your DevInsight Password Reset Code";
         String message = "Hi " + resetPasswordEmailDto.getName() + "!\n" +
                 "You are receiving this email because you requested to reset your password.\n" +
                 "This code is valid for 1 hour. After that, it will be expired.\n" +

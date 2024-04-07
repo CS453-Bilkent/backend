@@ -33,9 +33,6 @@ public class ApplicationSecurity implements WebMvcConfigurer {
     @Value("${frontend.url}")
     private String frontendUrl;
 
-    @Value("${environment}")
-    private String environment;
-
     @Value("${springdoc.user.name}")
     private String springdocUsername;
 
