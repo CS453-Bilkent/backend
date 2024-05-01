@@ -2,16 +2,16 @@ package com.bilkent.devinsight.service;
 
 import com.bilkent.devinsight.constants.TimeConstants;
 import com.bilkent.devinsight.constants.UserConstants;
-import com.bilkent.devinsight.dto.ResetPasswordEmailDto;
-import com.bilkent.devinsight.dto.UserDto;
-import com.bilkent.devinsight.dto.VerifyMailAddressDto;
-import com.bilkent.devinsight.dto.request.auth.ReqLogin;
-import com.bilkent.devinsight.dto.request.auth.ReqRegister;
-import com.bilkent.devinsight.dto.request.auth.ReqVerifyMailAddress;
-import com.bilkent.devinsight.dto.request.user.ReqChangePass;
-import com.bilkent.devinsight.dto.request.user.ReqResetPassCode;
-import com.bilkent.devinsight.dto.request.user.ReqResetPassVerifyCode;
-import com.bilkent.devinsight.dto.request.user.ReqResetPassVerifyPassword;
+import com.bilkent.devinsight.response.email.REmailResetPassword;
+import com.bilkent.devinsight.response.RUser;
+import com.bilkent.devinsight.response.email.REmailVerifyMailAddress;
+import com.bilkent.devinsight.request.auth.QLogin;
+import com.bilkent.devinsight.request.auth.QRegister;
+import com.bilkent.devinsight.request.auth.QVerifyMailAddress;
+import com.bilkent.devinsight.request.user.QChangePassword;
+import com.bilkent.devinsight.request.user.QResetPasswordCode;
+import com.bilkent.devinsight.request.user.QResetPasswordVerifyCode;
+import com.bilkent.devinsight.request.user.QResetPasswordVerifyPassword;
 import com.bilkent.devinsight.entity.ResetPasswordCode;
 import com.bilkent.devinsight.entity.User;
 import com.bilkent.devinsight.entity.VerifyMailAddressCode;
@@ -21,17 +21,18 @@ import com.bilkent.devinsight.mapper.UserMapper;
 import com.bilkent.devinsight.repository.ResetPasswordRepository;
 import com.bilkent.devinsight.repository.UserRepository;
 import com.bilkent.devinsight.repository.VerifyMailAddressCodeRepository;
-import com.bilkent.devinsight.dto.response.ResRefreshToken;
-import com.bilkent.devinsight.dto.response.ResUserToken;
-import com.bilkent.devinsight.security.JwtTokenUtil;
+import com.bilkent.devinsight.response.ResRefreshToken;
+import com.bilkent.devinsight.response.ResUserToken;
+import com.bilkent.devinsight.security.JWTUserService;
+import com.bilkent.devinsight.security.JWTUtils;
 import com.bilkent.devinsight.utils.CodeUtils;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -42,14 +43,15 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Service
 @Transactional
+@Slf4j
 public class AuthService {
     public static int hashStrength = 10;
 
     @Autowired
     final PasswordEncoder bCryptPasswordEncoder;
 
-    private final JwtTokenUtil jwtTokenUtil;
-
+    private final JWTUtils jwtUtils;
+    private final JWTUserService jwtUserService;
 
     private final UserRepository userRepository;
     private final ResetPasswordRepository resetPasswordRepository;
@@ -58,7 +60,7 @@ public class AuthService {
     private final MailService mailService;
 
 
-    public ResUserToken login(ReqLogin user) throws BaseException {
+    public ResUserToken login(QLogin user) throws BaseException {
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
 
         if (optionalUser.isEmpty()) {
@@ -74,8 +76,11 @@ public class AuthService {
             throw new WrongPasswordException();
         }
 
-        final String accessToken = jwtTokenUtil.generateAccessToken(dbUser);
-        final String refreshToken = jwtTokenUtil.generateRefreshToken(dbUser);
+        final UserDetails userDetails = jwtUserService.loadUserByUsername(user.getEmail());
+        final String accessToken = jwtUtils.createAccessToken(userDetails);
+        final String refreshToken = jwtUtils.createRefreshToken(userDetails);
+
+        log.info("User logged in: {}", user.getEmail());
 
         return ResUserToken.builder()
                 .accessToken(accessToken)
@@ -83,6 +88,8 @@ public class AuthService {
                 .user(UserMapper.toDTO(dbUser))
                 .build();
     }
+
+
 
     public void resendEmailVerification() {
         User user = getCurrentUserEntity();
@@ -120,57 +127,48 @@ public class AuthService {
 
         verifyMailAddressCode = verifyMailAddressCodeRepository.save(verifyMailAddressCode);
 
-        VerifyMailAddressDto verifyMailAddressDto = VerifyMailAddressDto.builder()
+        REmailVerifyMailAddress rEmailVerifyMailAddress = REmailVerifyMailAddress.builder()
                 .email(user.getEmail())
                 .name(user.getUsername())
                 .code(code)
                 .build();
 
-        mailService.sendVerifyMailAddressEmail(verifyMailAddressDto);
+        mailService.sendVerifyMailAddressEmail(rEmailVerifyMailAddress);
 
         return;
     }
 
-    public UserDto getCurrentUserDto() {
+    public RUser getCurrentUserDto() {
         User dbUser = getCurrentUserEntity();
         return UserMapper.toDTO(dbUser);
     }
 
 
-    public ResRefreshToken refreshToken(HttpServletRequest request, String auth) {
-        if (jwtTokenUtil.hasAuthorizationBearer(request)) {
-            throw new TokenException("No authorization header is present", HttpStatus.UNAUTHORIZED);
+    public ResRefreshToken refreshToken(String auth) {
+
+        String username = null;
+        try {
+            username = jwtUtils.extractRefreshUsername(jwtUtils.getTokenWithoutBearer(auth));
+        } catch (Exception e) {
+            log.error("Error in generating new token with refresh token", e);
+            throw new SomethingWentWrongException();
         }
 
-        String refreshToken = auth.substring(7);
-        if (!jwtTokenUtil.validateRefreshToken(refreshToken)) {
-            throw new TokenException("Invalid refresh token", HttpStatus.UNAUTHORIZED);
-        }
+        final UserDetails userDetails = jwtUserService.loadUserByUsername(username);
+        final String accessToken = jwtUtils.createAccessToken(userDetails);
 
-        // Assuming that 'ResRefreshToken' is a DTO that contains a String 'accessToken'
-//        if (isRefreshTokenExpired(refreshToken)) {
-//            throw new TokenException("Expired refresh token", HttpStatus.UNAUTHORIZED);
-//        }
-
-        String username = jwtTokenUtil.extractRefreshUsername(refreshToken);
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isEmpty()) {
-            throw new UserNotFoundException(HttpStatus.UNAUTHORIZED);
-        }
-
-        String newAccessToken = jwtTokenUtil.generateAccessToken(user.get());
         return ResRefreshToken.builder()
-                .accessToken(newAccessToken)
+                .accessToken(accessToken)
                 .build();
     }
 
-    public UserDto registerUser(ReqRegister reqRegister) {
-        User user = addUser(reqRegister);
+    public RUser registerUser(QRegister qRegister) {
+        User user = addUser(qRegister);
         return UserMapper.toDTO(user);
     }
 
-    public void requestResetPassword(ReqResetPassCode reqResetPassCode) {
-        String email = reqResetPassCode.getEmail();
+    public void requestResetPassword(QResetPasswordCode qResetPasswordCode) {
+        String email = qResetPasswordCode.getEmail();
         Optional<User> optionalUser = userRepository.findByEmail(email);
 
         if (optionalUser.isEmpty()) {
@@ -194,21 +192,21 @@ public class AuthService {
 
         resetPasswordCode = resetPasswordRepository.save(resetPasswordCode);
 
-        ResetPasswordEmailDto resetPasswordEmailDto =
-                ResetPasswordEmailDto.builder()
+        REmailResetPassword rEmailResetPassword =
+                REmailResetPassword.builder()
                 .email(email)
                 .name(dbUser.getName())
                 .code(resetCode)
                 .build();
 
-        mailService.sendResetPasswordEmail(resetPasswordEmailDto);
+        mailService.sendResetPasswordEmail(rEmailResetPassword);
 
         return;
     }
 
-    public void verifyResetPasswordCode(ReqResetPassVerifyCode reqResetPassVerifyCode) {
-        String email = reqResetPassVerifyCode.getEmail();
-        String code = reqResetPassVerifyCode.getVerifyCode();
+    public void verifyResetPasswordCode(QResetPasswordVerifyCode qResetPasswordVerifyCode) {
+        String email = qResetPasswordVerifyCode.getEmail();
+        String code = qResetPasswordVerifyCode.getVerifyCode();
 
         Optional<User> optionalUser = userRepository.findByEmail(email);
 
@@ -242,9 +240,9 @@ public class AuthService {
         return;
     }
 
-    public void verifyMailAddress(ReqVerifyMailAddress reqVerifyMailAddress) {
-        String email = reqVerifyMailAddress.getEmail();
-        String code = reqVerifyMailAddress.getCode();
+    public void verifyMailAddress(QVerifyMailAddress qVerifyMailAddress) {
+        String email = qVerifyMailAddress.getEmail();
+        String code = qVerifyMailAddress.getCode();
 
         Optional<User> optionalUser = userRepository.findByEmail(email);
 
@@ -286,10 +284,10 @@ public class AuthService {
         throw new InvalidVerifyMailAddressCodeException();
     }
 
-    public void resetPasswordWithCode(ReqResetPassVerifyPassword reqResetPassVerifyPassword) {
-        String email = reqResetPassVerifyPassword.getEmail();
-        String code = reqResetPassVerifyPassword.getVerifyCode();
-        String newPassword = reqResetPassVerifyPassword.getNewPassword();
+    public void resetPasswordWithCode(QResetPasswordVerifyPassword qResetPasswordVerifyPassword) {
+        String email = qResetPasswordVerifyPassword.getEmail();
+        String code = qResetPasswordVerifyPassword.getVerifyCode();
+        String newPassword = qResetPasswordVerifyPassword.getNewPassword();
 
         Optional<User> optionalUser = userRepository.findByEmail(email);
 
@@ -341,10 +339,10 @@ public class AuthService {
         return optionalUserEntity.get();
     }
 
-    public boolean changePassword(ReqChangePass reqChangePass) {
+    public boolean changePassword(QChangePassword qChangePassword) {
         User dbUser = getCurrentUserEntity();
         String hashedPassword = dbUser.getPassword();
-        String oldPassword = reqChangePass.getOldPassword();
+        String oldPassword = qChangePassword.getOldPassword();
 
         boolean passwordMatch = bCryptPasswordEncoder.matches(oldPassword, hashedPassword);
 
@@ -352,7 +350,7 @@ public class AuthService {
             throw new WrongPasswordException();
         }
 
-        String newPassword = reqChangePass.getNewPassword();
+        String newPassword = qChangePassword.getNewPassword();
         String hashedNewPassword = bCryptPasswordEncoder.encode(newPassword);
 
         dbUser.setPassword(hashedNewPassword);
@@ -373,14 +371,14 @@ public class AuthService {
      * Adds user to the system
      * Do not return UserEntity directly, it contains password
      *
-     * @param reqRegister request body
+     * @param qRegister request body
      * @return UserEntity
      */
-    private User addUser(ReqRegister reqRegister) {
-        String email = reqRegister.getEmail();
-        String password = reqRegister.getPassword();
-        String username = reqRegister.getUsername();
-        String name = reqRegister.getName();
+    private User addUser(QRegister qRegister) {
+        String email = qRegister.getEmail();
+        String password = qRegister.getPassword();
+        String username = qRegister.getUsername();
+        String name = qRegister.getName();
 
         boolean userExist = userRepository.existsByEmail(email);
 
@@ -393,8 +391,6 @@ public class AuthService {
         if (userExist) {
             throw new UserAlreadyExistsException("User with this username already exists");
         }
-
-
 
         User user = User.builder()
                 .username(username)
@@ -425,13 +421,13 @@ public class AuthService {
         verifyMailAddressCode = verifyMailAddressCodeRepository.save(verifyMailAddressCode);
 
 
-        VerifyMailAddressDto verifyMailAddressDto = VerifyMailAddressDto.builder()
+        REmailVerifyMailAddress rEmailVerifyMailAddress = REmailVerifyMailAddress.builder()
                 .email(email)
                 .name(username)
                 .code(code)
                 .build();
 
-        mailService.sendVerifyMailAddressEmail(verifyMailAddressDto);
+        mailService.sendVerifyMailAddressEmail(rEmailVerifyMailAddress);
         return user;
     }
 

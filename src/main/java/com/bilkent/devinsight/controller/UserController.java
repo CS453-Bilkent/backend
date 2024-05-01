@@ -1,15 +1,15 @@
 package com.bilkent.devinsight.controller;
 
 import com.bilkent.devinsight.annotations.RequiredRole;
-import com.bilkent.devinsight.dto.request.user.ReqChangeEmail;
-import com.bilkent.devinsight.dto.request.user.ReqInitialEmailCode;
-import com.bilkent.devinsight.dto.request.user.ReqSecondaryEmailCode;
+import com.bilkent.devinsight.request.user.QChangeEmail;
+import com.bilkent.devinsight.request.user.QInitialEmailCode;
+import com.bilkent.devinsight.request.user.QSecondaryEmailCode;
 import com.bilkent.devinsight.entity.enums.UserRole;
-import com.bilkent.devinsight.dto.response.ApiResponse;
-import com.bilkent.devinsight.dto.response.ResUserToken;
+import com.bilkent.devinsight.response.struct.ApiResponse;
 import com.bilkent.devinsight.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,50 +26,38 @@ public class UserController {
 
     @RequiredRole(value = {UserRole.REGISTERED_USER, UserRole.ADMIN})
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, path="change-email/request")
-    public ResponseEntity<Object> sendChangeEmailCode(@Valid @RequestBody ReqChangeEmail reqChangeEmail) {
-        userService.sendChangeEmailCode(reqChangeEmail);
+    public ResponseEntity<ApiResponse<Void>> sendChangeEmailCode(@Valid @RequestBody QChangeEmail qChangeEmail) {
+        userService.sendChangeEmailCode(qChangeEmail);
 
         return ResponseEntity.ok(
-                ApiResponse.<ResUserToken>builder()
-                        .operationResultData(null)
-                        .operationResult(ApiResponse.OperationResult.builder()
-                                .returnMessage("Email change code sent to your old email successfully")
-                                .returnCode("0")
-                                .returnErrors(null)
-                                .build())
+                ApiResponse.<Void>builder()
+                        .status(HttpStatus.OK.value())
+                        .message("Email change code sent to your email successfully")
                         .build());
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, path="change-email/verify-initial")
-    public ResponseEntity<Object> verifyInitialChangeEmailCode(@Valid @RequestBody ReqInitialEmailCode
-                                                                           reqInitialEmailCode) {
-        userService.verifyInitialChangeEmailCode(reqInitialEmailCode);
+    public ResponseEntity<ApiResponse<Void>> verifyInitialChangeEmailCode(@Valid @RequestBody QInitialEmailCode
+                                                                                  qInitialEmailCode) {
+        userService.verifyInitialChangeEmailCode(qInitialEmailCode);
 
         return ResponseEntity.ok(
-                ApiResponse.<ResUserToken>builder()
-                        .operationResultData(null)
-                        .operationResult(ApiResponse.OperationResult.builder()
-                                .returnMessage("Your code was verified. Email change code sent to your new email successfully")
-                                .returnCode("0")
-                                .returnErrors(null)
-                                .build())
+                ApiResponse.<Void>builder()
+                        .status(HttpStatus.OK.value())
+                        .message("Your code was verified successfully")
                         .build());
     }
 
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, path="change-email/verify-secondary")
-    public ResponseEntity<Object> verifySecondaryChangeEmailCode(@Valid @RequestBody ReqSecondaryEmailCode
-                                                                       reqSecondaryEmailCode) {
-        userService.verifySecondaryChangeEmailCode(reqSecondaryEmailCode);
+    public ResponseEntity<ApiResponse<Void>> verifySecondaryChangeEmailCode(@Valid @RequestBody QSecondaryEmailCode
+                                                                                    qSecondaryEmailCode) {
+        userService.verifySecondaryChangeEmailCode(qSecondaryEmailCode);
 
         return ResponseEntity.ok(
-                ApiResponse.<ResUserToken>builder()
-                        .operationResultData(null)
-                        .operationResult(ApiResponse.OperationResult.builder()
-                                .returnMessage("Your code was verified and your email address is updated!")
-                                .returnCode("0")
-                                .returnErrors(null)
-                                .build())
+                ApiResponse.<Void>builder()
+                        .status(HttpStatus.OK.value())
+                        .message("Your email was changed successfully")
                         .build());
     }
 

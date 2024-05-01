@@ -1,6 +1,6 @@
 package com.bilkent.devinsight.controller;
 
-import com.bilkent.devinsight.dto.FileCommitRank;
+import com.bilkent.devinsight.response.RFileCommitRank;
 import com.bilkent.devinsight.service.CommitService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +18,7 @@ public class CommitController {
     private final CommitService commitService;
 
     @GetMapping(path="/file-rankings")
-    public ResponseEntity<List<FileCommitRank>> getFileCommitRankings() {
+    public ResponseEntity<List<RFileCommitRank>> getFileCommitRankings() {
         return null;
     }
 }

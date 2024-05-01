@@ -1,6 +1,6 @@
 package com.bilkent.devinsight.mapper;
 
-import com.bilkent.devinsight.dto.UserDto;
+import com.bilkent.devinsight.response.RUser;
 import com.bilkent.devinsight.entity.User;
 import lombok.experimental.UtilityClass;
 
@@ -9,8 +9,8 @@ import java.util.List;
 
 @UtilityClass
 public class UserMapper {
-    public static UserDto toDTO(User user) {
-        return UserDto.builder()
+    public static RUser toDTO(User user) {
+        return RUser.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .role(user.getRole())
@@ -20,13 +20,13 @@ public class UserMapper {
                 .build();
     }
 
-    public static List<UserDto> toDTO(List<User> users) {
-        List<UserDto> userDtos = new ArrayList<>();
+    public static List<RUser> toDTO(List<User> users) {
+        List<RUser> rUsers = new ArrayList<>();
 
         for (User user : users) {
-            userDtos.add(toDTO(user));
+            rUsers.add(toDTO(user));
         }
 
-        return userDtos;
+        return rUsers;
     }
 }

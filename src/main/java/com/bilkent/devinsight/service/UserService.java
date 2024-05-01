@@ -1,11 +1,11 @@
 package com.bilkent.devinsight.service;
 
 import com.bilkent.devinsight.constants.TimeConstants;
-import com.bilkent.devinsight.dto.ChangeMailAddressEmailDto;
-import com.bilkent.devinsight.dto.UserDto;
-import com.bilkent.devinsight.dto.request.user.ReqChangeEmail;
-import com.bilkent.devinsight.dto.request.user.ReqInitialEmailCode;
-import com.bilkent.devinsight.dto.request.user.ReqSecondaryEmailCode;
+import com.bilkent.devinsight.response.email.REmailChangeMail;
+import com.bilkent.devinsight.response.RUser;
+import com.bilkent.devinsight.request.user.QChangeEmail;
+import com.bilkent.devinsight.request.user.QInitialEmailCode;
+import com.bilkent.devinsight.request.user.QSecondaryEmailCode;
 import com.bilkent.devinsight.entity.ChangeEmailCode;
 import com.bilkent.devinsight.entity.User;
 import com.bilkent.devinsight.entity.enums.ChangeEmailCodeType;
@@ -38,17 +38,17 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public UserDto createUser(UserDto userDTO) {
+    public RUser createUser(RUser rUser) {
         User user = new User();
-        user.setName(userDTO.getName());
-        user.setEmail(userDTO.getEmail());
+        user.setName(rUser.getName());
+        user.setEmail(rUser.getEmail());
         // set other fields as necessary
         user = userRepository.save(user);
         return UserMapper.toDTO(user);
     }
 
-    public void sendChangeEmailCode(ReqChangeEmail reqChangeEmail) {
-        String newMailAddress = reqChangeEmail.getNewEmail();
+    public void sendChangeEmailCode(QChangeEmail qChangeEmail) {
+        String newMailAddress = qChangeEmail.getNewEmail();
         User user = authService.getCurrentUserEntity();
 
         int code = CodeUtils.generateChangeEmailCode();
@@ -74,7 +74,7 @@ public class UserService {
                 .build();
         changeEmailCodeRepository.save(changeEmailCode);
 
-        ChangeMailAddressEmailDto changeMailAddressEmailDto = ChangeMailAddressEmailDto.builder()
+        REmailChangeMail changeMailAddressEmailDto = REmailChangeMail.builder()
                 .name(user.getName())
                 .email(user.getEmail())
                 .newEmail(newMailAddress)
@@ -85,8 +85,8 @@ public class UserService {
         return;
     }
 
-    public void verifyInitialChangeEmailCode(ReqInitialEmailCode reqInitialEmailCode) {
-        int userCode = reqInitialEmailCode.getCode();
+    public void verifyInitialChangeEmailCode(QInitialEmailCode qInitialEmailCode) {
+        int userCode = qInitialEmailCode.getCode();
         User user = authService.getCurrentUserEntity();
 
         Optional<ChangeEmailCode> optionalChangeEmailCode =
@@ -124,7 +124,7 @@ public class UserService {
                 .build();
         changeEmailCodeRepository.save(secondaryEmailCode);
 
-        ChangeMailAddressEmailDto changeMailAddressEmailDto = ChangeMailAddressEmailDto.builder()
+        REmailChangeMail changeMailAddressEmailDto = REmailChangeMail.builder()
                 .name(user.getName())
                 .email(user.getEmail())
                 .newEmail(user.getEmail())
@@ -135,8 +135,8 @@ public class UserService {
         return;
     }
 
-    public void verifySecondaryChangeEmailCode(ReqSecondaryEmailCode reqSecondaryEmailCode) {
-        int userCode = reqSecondaryEmailCode.getCode();
+    public void verifySecondaryChangeEmailCode(QSecondaryEmailCode qSecondaryEmailCode) {
+        int userCode = qSecondaryEmailCode.getCode();
         User user = authService.getCurrentUserEntity();
 
         Optional<ChangeEmailCode> optionalChangeEmailCode =
@@ -171,11 +171,11 @@ public class UserService {
         return;
     }
 
-    public UserDto updateUser(Long id, UserDto userDTO) {
+    public RUser updateUser(Long id, RUser rUser) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
-        user.setName(userDTO.getName());
-        user.setEmail(userDTO.getEmail());
+        user.setName(rUser.getName());
+        user.setEmail(rUser.getEmail());
 
         // update other fields as necessary
         user = userRepository.save(user);
@@ -186,7 +186,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public UserDto getUserById(Long id) {
+    public RUser getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
         return UserMapper.toDTO(user);

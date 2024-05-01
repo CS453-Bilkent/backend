@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -16,7 +17,9 @@ import java.util.HashSet;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "pull_requests")
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class PullRequest extends BaseEntity {
 
     @Id

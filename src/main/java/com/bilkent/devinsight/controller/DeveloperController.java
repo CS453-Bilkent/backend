@@ -1,6 +1,6 @@
 package com.bilkent.devinsight.controller;
 
-import com.bilkent.devinsight.dto.DeveloperEffectiveness;
+import com.bilkent.devinsight.response.RDeveloperEffectiveness;
 import com.bilkent.devinsight.service.DeveloperService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +19,7 @@ public class DeveloperController {
 
 
     @GetMapping("/effectiveness")
-    public ResponseEntity<List<DeveloperEffectiveness>> getDeveloperEffectiveness() {
+    public ResponseEntity<List<RDeveloperEffectiveness>> getDeveloperEffectiveness() {
 //        return ResponseEntity.ok(developerService.calculateDeveloperEffectiveness());
         return null;
     }

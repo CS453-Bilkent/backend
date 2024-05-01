@@ -1,7 +1,7 @@
 package com.bilkent.devinsight.service;
 
 
-import com.bilkent.devinsight.dto.DeveloperEffectiveness;
+import com.bilkent.devinsight.response.RDeveloperEffectiveness;
 import com.bilkent.devinsight.entity.Contributor;
 import com.bilkent.devinsight.repository.CommitRepository;
 import com.bilkent.devinsight.repository.ContributorRepository;
@@ -21,19 +21,19 @@ public class DeveloperService {
     private final CommitRepository commitRepository;
     private final IssueRepository issueRepository;
 
-    public List<DeveloperEffectiveness> calculateDeveloperEffectiveness() {
+    public List<RDeveloperEffectiveness> calculateDeveloperEffectiveness() {
         List<Contributor> contributors = contributorRepository.findAll();
-        List<DeveloperEffectiveness> effectivenessList = new ArrayList<>();
+        List<RDeveloperEffectiveness> effectivenessList = new ArrayList<>();
 
         for (Contributor contributor : contributors) {
             long commitCount = commitRepository.countByContributor(contributor);
-            long closedIssuesCount = issueRepository.countByClosedByAndClosedTrue(contributor);
+            long closedIssuesCount = issueRepository.countByClosedByAndIsClosedTrue(contributor);
 
             // Code stickiness and bug fixes would need custom logic to calculate
             long codeStickiness = 0; // Placeholder for actual calculation
             long bugsFixed = 0; // Placeholder for actual calculation
 
-            DeveloperEffectiveness developerEffectiveness = DeveloperEffectiveness.builder()
+            RDeveloperEffectiveness rDeveloperEffectiveness = RDeveloperEffectiveness.builder()
                             .contributor(contributor)
                             .commitCount(commitCount)
                             .closedIssuesCount(closedIssuesCount)
@@ -41,7 +41,7 @@ public class DeveloperService {
                             .bugsFixed(bugsFixed)
                             .build();
 
-            effectivenessList.add(developerEffectiveness);
+            effectivenessList.add(rDeveloperEffectiveness);
         }
 
         return effectivenessList;

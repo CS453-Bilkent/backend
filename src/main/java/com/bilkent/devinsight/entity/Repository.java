@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,8 +14,10 @@ import java.util.List;
 @Entity
 @Data
 @AllArgsConstructor
+@Table(name = "repositories")
 @NoArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class Repository extends BaseEntity {
 
     @Id
@@ -32,4 +35,10 @@ public class Repository extends BaseEntity {
 
     @OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PullRequest> pullRequests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Commit> commits = new ArrayList<>();
+
+    @OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<File> files = new ArrayList<>();
 }

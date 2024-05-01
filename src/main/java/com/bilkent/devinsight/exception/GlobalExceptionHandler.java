@@ -1,6 +1,6 @@
 package com.bilkent.devinsight.exception;
 
-import com.bilkent.devinsight.dto.response.ApiResponse;
+import com.bilkent.devinsight.response.struct.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 @Slf4j
@@ -42,6 +43,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return createErrorResponse(exception.getHttpStatus(), exception.getMessage());
     }
 
+    @ExceptionHandler(SomethingWentWrongException.class)
+    public ResponseEntity<ApiResponse<Object>> handleWrongPasswordExceptions(SomethingWentWrongException exception) {
+        log.error("An exception occurred " + exception.getMessage());
+
+        return createErrorResponse(exception.getHttpStatus(), exception.getMessage());
+    }
+
+    @ExceptionHandler(GithubConnectionException.class)
+    public ResponseEntity<ApiResponse<Object>> handleWrongPasswordExceptions(GithubConnectionException exception) {
+        log.error("An exception occurred " + exception.getMessage());
+
+        return createErrorResponse(exception.getHttpStatus(), exception.getMessage());
+    }
 
 
     private ResponseEntity<ApiResponse<Object>> createErrorResponse(HttpStatus httpStatus, String errorMessage) {
@@ -51,26 +65,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     private ApiResponse<Object> createErrorApiResponse(int errorCode, String errorMessage) {
+        String timestamp = new SimpleDateFormat("yyyy.MM.dd HH.mm.ss").format(new java.util.Date());
+
         return ApiResponse.builder()
-                .operationResult(ApiResponse.OperationResult.builder()
-                        .returnCode(Integer.toString(errorCode))
-                        .returnMessage(errorMessage)
-                        .returnErrors(null)
-                        .build()
-                )
-                .operationResultData(null)
+                .message(errorMessage)
+                .timestamp(timestamp)
+                .status(errorCode)
                 .build();
     }
 
     private ApiResponse<Object> createErrorApiResponseWithList(int errorCode, String errorMessage, List<String> errors) {
+        String timestamp = new SimpleDateFormat("yyyy.MM.dd HH.mm.ss").format(new java.util.Date());
+
         return ApiResponse.builder()
-                .operationResult(ApiResponse.OperationResult.builder()
-                        .returnCode(Integer.toString(errorCode))
-                        .returnMessage(errorMessage)
-                        .returnErrors(errors)
-                        .build()
-                )
-                .operationResultData(null)
+                .message(errorMessage)
+                .timestamp(timestamp)
+                .status(errorCode)
                 .build();
     }
 }
