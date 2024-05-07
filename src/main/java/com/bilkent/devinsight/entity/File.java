@@ -8,6 +8,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.List;
+import java.util.UUID;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -18,11 +21,14 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class File extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @NotNull
     private String name;
+
+    @NotNull
+    private String sha;
 
     @NotNull
     private String path;
@@ -30,4 +36,7 @@ public class File extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "repository_id")
     private Repository repository;
+
+    @OneToMany
+    private List<FileChange> fileChanges;
 }

@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -171,7 +172,7 @@ public class UserService {
         return;
     }
 
-    public RUser updateUser(Long id, RUser rUser) {
+    public RUser updateUser(UUID id, RUser rUser) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
         user.setName(rUser.getName());
@@ -182,11 +183,11 @@ public class UserService {
         return UserMapper.toDTO(user);
     }
 
-    public void deleteUser(Long id) {
+    public void deleteUser(UUID id) {
         userRepository.deleteById(id);
     }
 
-    public RUser getUserById(Long id) {
+    public RUser getUserById(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
         return UserMapper.toDTO(user);

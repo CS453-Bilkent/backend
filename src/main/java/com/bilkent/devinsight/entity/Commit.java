@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -21,8 +22,11 @@ import java.util.Set;
 @EntityListeners(AuditingEntityListener.class)
 public class Commit extends BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @NotNull
+    private String url;
 
     @NotNull
     private Date timestamp;
@@ -39,6 +43,9 @@ public class Commit extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "repository_id")
     private Repository repository;
+
+    @ManyToMany
+    private Set<PullRequest> pullRequests = new HashSet<>();
 
     @ManyToMany
     private Set<File> changedFiles = new HashSet<>();

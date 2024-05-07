@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Entity
 @Table(name = "change_password_codes")
@@ -20,8 +21,8 @@ import java.util.Date;
 public class ChangePasswordCode extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @NotNull
     private Date expireDate;

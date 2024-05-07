@@ -8,6 +8,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.Set;
+import java.util.UUID;
+
 @Getter
 @Setter
 @Builder
@@ -19,8 +22,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class User extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @NotBlank
     private String username;
@@ -44,6 +47,9 @@ public class User extends BaseEntity {
 
     @NotNull
     private Boolean emailVerified = false;
+
+    @ManyToMany
+    private Set<UserRepositoryRel> repositories;
 
     public String toString(){
         return "User [id=" + id + ", username=" + username + ", name=" + name + ", email=" + email + ", role=" + role + "]";

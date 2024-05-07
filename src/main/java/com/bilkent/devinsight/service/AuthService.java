@@ -327,8 +327,8 @@ public class AuthService {
 
     protected User getCurrentUserEntity() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         String userName = authentication.getName();
+        System.out.println(userName);
 
         Optional<User> optionalUserEntity = userRepository.findByEmail(userName);
 

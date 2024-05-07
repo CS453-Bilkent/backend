@@ -12,6 +12,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -23,8 +26,14 @@ import java.util.Date;
 public class Issue extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @NotNull
+    private int issueId;
+
+    @NotNull
+    private String url;
 
     @NotNull
     private String title;
@@ -44,6 +53,9 @@ public class Issue extends BaseEntity {
 
     @NotNull
     private Integer severityRating;
+
+    @ManyToMany
+    private Set<Contributor> contributors = new HashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "repository_id")

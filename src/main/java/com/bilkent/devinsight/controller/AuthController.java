@@ -52,7 +52,7 @@ public class AuthController {
                         .build());
     }
 
-    @GetMapping("/refresh")
+    @GetMapping("refresh")
     public ResponseEntity<ApiResponse<ResRefreshToken>> refreshToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws Exception {
         ResRefreshToken newToken = authService.refreshToken(auth);
         return ResponseEntity.ok(
@@ -63,7 +63,7 @@ public class AuthController {
                         .build());
     }
 
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, path = "logout")
+    @PostMapping(path = "logout")
     public ResponseEntity<ApiResponse<Void>> logout() {
         authService.logout();
 
@@ -74,7 +74,7 @@ public class AuthController {
                         .build());
     }
 
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, path = "resend-email-verification")
+    @PostMapping(path = "resend-email-verification")
     public ResponseEntity<ApiResponse<Void>> resendEmailVerification() {
         authService.resendEmailVerification();
 
@@ -86,7 +86,7 @@ public class AuthController {
     }
 
 
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, path = "me")
+    @GetMapping(path = "me")
     public ResponseEntity<ApiResponse<RUser>> getCurrentUser() {
         RUser user = authService.getCurrentUserDto();
 

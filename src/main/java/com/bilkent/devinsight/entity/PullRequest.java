@@ -1,6 +1,5 @@
 package com.bilkent.devinsight.entity;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -9,9 +8,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -23,17 +23,23 @@ import java.util.HashSet;
 public class PullRequest extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @NotNull
+    private int pullRequestId;
+
+    @NotNull
+    private String url;
 
     @NotNull
     private String title;
 
     @NotNull
-    private LocalDateTime createdAt;
+    private Date createdAt;
 
     @NotNull
-    private LocalDateTime mergedAt;
+    private Date mergedAt;
 
     @NotNull
     private Integer numberOfComments;
@@ -44,14 +50,20 @@ public class PullRequest extends BaseEntity {
     @NotNull
     private Integer size;
 
-    @ManyToOne
-    @JoinColumn(name = "issue_id")
-    private Issue issue;
+    @NotNull
+    private Integer additions;
+
+    @NotNull
+    private Integer deletions;
 
     @ManyToOne
     @JoinColumn(name = "repository_id")
     private Repository repository;
 
     @ManyToMany
-    private Set<Contributor> contributors = new HashSet<>();
+    private Set<Contributor> requestedReviewers = new HashSet<>();
+
+    @ManyToMany
+    private Set<Contributor> assignees = new HashSet<>();
+
 }

@@ -6,11 +6,11 @@ public class UserNotFoundException extends BaseException {
 
 
     public UserNotFoundException() {
-        super("User not found!", HttpStatus.BAD_REQUEST);
+        super("User not found!", HttpStatus.NOT_FOUND);
     }
 
     public UserNotFoundException(String message) {
-        super(message, HttpStatus.BAD_REQUEST);
+        super(message, HttpStatus.NOT_FOUND);
     }
 
     public UserNotFoundException(HttpStatus httpStatus) {

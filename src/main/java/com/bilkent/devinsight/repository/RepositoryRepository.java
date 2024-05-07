@@ -9,5 +9,8 @@ import java.util.Optional;
 public interface RepositoryRepository extends JpaRepository<Repository, Long> {
 
 
+    Optional<Repository> findByNameAndOwner(String name, String owner);
+
+
 
 }

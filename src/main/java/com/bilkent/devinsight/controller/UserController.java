@@ -1,6 +1,5 @@
 package com.bilkent.devinsight.controller;
 
-import com.bilkent.devinsight.annotations.RequiredRole;
 import com.bilkent.devinsight.request.user.QChangeEmail;
 import com.bilkent.devinsight.request.user.QInitialEmailCode;
 import com.bilkent.devinsight.request.user.QSecondaryEmailCode;
@@ -24,7 +23,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @RequiredRole(value = {UserRole.REGISTERED_USER, UserRole.ADMIN})
+//    @RequiredRole(value = {UserRole.REGISTERED_USER, UserRole.ADMIN})
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, path="change-email/request")
     public ResponseEntity<ApiResponse<Void>> sendChangeEmailCode(@Valid @RequestBody QChangeEmail qChangeEmail) {
         userService.sendChangeEmailCode(qChangeEmail);

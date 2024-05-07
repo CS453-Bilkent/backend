@@ -8,8 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Data
@@ -21,24 +20,35 @@ import java.util.List;
 public class Repository extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @NotNull
     private String name;
 
     @NotNull
+    private String owner;
+
+    @NotNull
     private String url;
 
     @OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Issue> issues = new ArrayList<>();
+    private Set<Issue> issues = new HashSet<>();
 
     @OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PullRequest> pullRequests = new ArrayList<>();
+    private Set<PullRequest> pullRequests = new HashSet<>();
 
     @OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Commit> commits = new ArrayList<>();
+    private Set<Commit> commits = new HashSet<>();
 
     @OneToMany(mappedBy = "repository", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<File> files = new ArrayList<>();
+    private Set<File> files = new HashSet<>();
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(
+            name = "repository_contributors",
+            joinColumns = @JoinColumn(name = "repository_id"),
+            inverseJoinColumns = @JoinColumn(name = "contributor_id")
+    )
+    private Set<Contributor> contributors = new HashSet<>();
 }

@@ -13,19 +13,20 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	@Autowired
-	private JWTUserService jwtUserService;
+	private final JWTUserService jwtUserService;
+	private final JWTFilter jwtFilter;
 
 	private static final String[] AUTH_WHITELIST = {
 			"/v3/api-docs/**",
 			"/swagger-ui/**",
-			"/auth/hello",
+			"/auth/me",
 			"/auth/login",
 			"/auth/register",
 			"/auth/request-reset",
@@ -42,7 +43,9 @@ public class SecurityConfig {
 				.authorizeHttpRequests((request) -> {
 					try {
 						request
-								.anyRequest().permitAll()
+								.requestMatchers(AUTH_WHITELIST)
+								.permitAll()
+								.anyRequest().authenticated()
 								.and()
 								.sessionManagement()
 								.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -52,6 +55,8 @@ public class SecurityConfig {
 						e.printStackTrace();
 					}
 				});
+
+		http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
 	}

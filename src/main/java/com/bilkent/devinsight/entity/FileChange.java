@@ -8,35 +8,46 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.Date;
 import java.util.UUID;
 
-
 @Entity
-@Table(name = "reset_password_codes")
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "file_changes")
+@Builder
 @EntityListeners(AuditingEntityListener.class)
-public class ResetPasswordCode extends BaseEntity {
+public class FileChange {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @NotNull
-    private Date expireDate;
+    private Integer additions;
 
     @NotNull
-    private String code;
+    private Integer changes;
 
     @NotNull
+    private Integer deletions;
+
+    @NotNull
+    private String patch;
+
+    @NotNull
+    private String status;
+
+    @NotNull
+    private String contentsUrl;
+
+    @NotNull
+    private String blobUrl;
+
+    @NotNull
+    private String rawUrl;
+
     @ManyToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
-    private User user;
-
-    @NotNull
-    private boolean isUsed = false;
-
+    @JoinColumn(name = "file_id")
+    private File file;
 }
