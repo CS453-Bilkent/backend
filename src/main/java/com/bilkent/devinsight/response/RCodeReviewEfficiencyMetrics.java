@@ -12,6 +12,9 @@ public class RCodeReviewEfficiencyMetrics {
     private Duration averageTimeToMerge;
 
     @NotNull
+    private Double numberOfCommentsPerPR;
+
+    @NotNull
     private Double averagePRSize;
 
     @NotNull

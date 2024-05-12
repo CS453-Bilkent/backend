@@ -2,6 +2,7 @@ package com.bilkent.devinsight.controller;
 
 import com.bilkent.devinsight.entity.Repository;
 import com.bilkent.devinsight.request.QAddRepository;
+import com.bilkent.devinsight.response.RCodeReviewEfficiencyMetrics;
 import com.bilkent.devinsight.response.RProjectHealthMetrics;
 import com.bilkent.devinsight.response.struct.ApiResponse;
 import com.bilkent.devinsight.service.RepositoryService;
@@ -38,5 +39,19 @@ public class RepositoryController {
 //        return ResponseEntity.ok(service.getProjectHealthMetrics());
         return null;
     }
+
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, path="")
+    public ResponseEntity<ApiResponse<RCodeReviewEfficiencyMetrics>> getCodeReviewMetrics(@Valid @RequestBody QAddRepository qAddRepository) {
+        RCodeReviewEfficiencyMetrics metrics = repositoryService.getRepositoryEfficiencyMetrics
+                (qAddRepository.getRepoOwner(), qAddRepository.getRepoName());
+        return ResponseEntity.ok(
+                ApiResponse.<RCodeReviewEfficiencyMetrics>builder()
+                        .data(metrics)
+                        .message("Repository added successfully")
+                        .status(HttpStatus.OK.value())
+                        .build()
+        );
+    }
+
 
 }
