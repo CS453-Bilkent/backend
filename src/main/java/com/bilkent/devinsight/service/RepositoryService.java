@@ -1,5 +1,6 @@
 package com.bilkent.devinsight.service;
 
+import com.bilkent.devinsight.entity.PullRequest;
 import com.bilkent.devinsight.entity.Repository;
 import com.bilkent.devinsight.entity.User;
 import com.bilkent.devinsight.entity.UserRepositoryRel;
@@ -7,11 +8,15 @@ import com.bilkent.devinsight.repository.RepositoryRepository;
 import com.bilkent.devinsight.repository.UserRepository;
 import com.bilkent.devinsight.repository.UserRepositoryRelRepository;
 import com.bilkent.devinsight.request.QAddRepository;
+import com.bilkent.devinsight.response.RCodeReviewEfficiencyMetrics;
+import com.bilkent.devinsight.utils.DateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.kohsuke.github.GHEventPayload;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -74,4 +79,33 @@ public class RepositoryService {
 
         return repository;
     }
+    public RCodeReviewEfficiencyMetrics getRepositoryEfficiencyMetrics(String owner, String repoName){
+        Repository repository = getOrCreateRepository(owner, repoName);
+        Set<PullRequest> pullRequests = repository.getPullRequests();
+        RCodeReviewEfficiencyMetrics metrics = new RCodeReviewEfficiencyMetrics();
+        int mergedPRCount = 0;
+        Double totalReviewsWithCoverage = 0.0;
+        Double totalAveragePRSize = 0.0;
+        Double totalNumberOfCommentsPerPR = 0.0;
+        Duration totalAverageTimeToMerge = Duration.ofSeconds(0);
+        for (PullRequest pullRequest: pullRequests){
+            if (pullRequest.getMergedAt() != null) {
+                mergedPRCount++;
+                totalAveragePRSize += pullRequest.getSize();
+                totalReviewsWithCoverage += pullRequest.getNumberOfComments() > 0 ? 1 : 0;
+                totalNumberOfCommentsPerPR += pullRequest.getNumberOfComments();
+                Duration timeToMerge = Duration.between(
+                        DateUtils.convertToLocalDateViaInstant(pullRequest.getCreatedAt()),
+                        DateUtils.convertToLocalDateViaInstant(pullRequest.getMergedAt()));
+                totalAverageTimeToMerge = totalAverageTimeToMerge.plus(timeToMerge);
+            }
+        }
+        metrics.setAveragePRSize(totalAveragePRSize/mergedPRCount);
+        metrics.setReviewCoverage(totalReviewsWithCoverage/mergedPRCount);
+        metrics.setNumberOfCommentsPerPR(totalNumberOfCommentsPerPR/mergedPRCount);
+        metrics.setAverageTimeToMerge(totalAverageTimeToMerge.dividedBy(mergedPRCount));
+
+        return metrics;
+    }
+
 }
