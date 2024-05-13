@@ -1,5 +1,6 @@
 package com.bilkent.devinsight.entity;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -38,7 +39,7 @@ public class PullRequest extends BaseEntity {
     @NotNull
     private Date createdAt;
 
-    @NotNull
+    @Nullable
     private Date mergedAt;
 
     @NotNull

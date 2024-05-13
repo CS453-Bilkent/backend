@@ -7,6 +7,7 @@ import com.bilkent.devinsight.exception.SomethingWentWrongException;
 import com.bilkent.devinsight.repository.*;
 import com.bilkent.devinsight.request.QGetRepository;
 import com.bilkent.devinsight.request.QGithubScrape;
+import com.bilkent.devinsight.response.RCollaborativePRCount;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.*;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -223,6 +225,138 @@ public class PullRequestService {
 //        repositoryRepository.save(repository);
 
         return pullRequest;
+    }
+
+    public Set<RCollaborativePRCount> countCollaborativePullRequests(QGetRepository qGetRepository) {
+        String owner = qGetRepository.getRepoOwner();
+        String repoName = qGetRepository.getRepoName();
+        Optional<Repository> optRepository = repositoryService.getRepository(owner, repoName);
+
+        if (optRepository.isEmpty()) {
+            log.error("Repository {}/{} not found.", owner, repoName);
+            throw new RepositoryNotFoundException();
+        }
+
+        Repository repository = optRepository.get();
+
+        Set<PullRequest> pullRequests = pullRequestRepository.findAllByRepository(repository);
+        Set<RCollaborativePRCount> collaborativePRCounts = new HashSet<>();
+        for (PullRequest pr : pullRequests) {
+            int count = (int) pr.getRequestedReviewers().stream()
+                    .filter(contributor -> pr.getAssignees().contains(contributor))
+                    .count();
+            collaborativePRCounts.add(RCollaborativePRCount.builder()
+                    .count(count)
+                            .pullRequest(pr)
+                    .build());
+        }
+        return collaborativePRCounts;
+    }
+
+
+
+    public Set<PullRequest> findMostActiveDiscussions(QGetRepository qGetRepository) {
+        String owner = qGetRepository.getRepoOwner();
+        String repoName = qGetRepository.getRepoName();
+
+        Optional<Repository> optRepository = repositoryService.getRepository(owner, repoName);
+
+        if (optRepository.isEmpty()) {
+            log.error("Repository {}/{} not found.", owner, repoName);
+            throw new RepositoryNotFoundException();
+        }
+
+        Repository repository = optRepository.get();
+
+        Set<PullRequest> pullRequests = pullRequestRepository.findAllByRepository(repository);
+
+        return pullRequests.stream()
+                .sorted(Comparator.comparingInt(PullRequest::getNumberOfComments).reversed())
+                .limit(10)
+                .collect(Collectors.toSet());
+    }
+
+    public Double calculateAverageMergeTime(QGetRepository qGetRepository) {
+        String owner = qGetRepository.getRepoOwner();
+        String repoName = qGetRepository.getRepoName();
+
+        Optional<Repository> optRepository = repositoryService.getRepository(owner, repoName);
+
+        if (optRepository.isEmpty()) {
+            log.error("Repository {}/{} not found.", owner, repoName);
+            throw new RepositoryNotFoundException();
+        }
+
+        Repository repository = optRepository.get();
+
+        Set<PullRequest> pullRequests = pullRequestRepository.findAllByRepository(repository);
+        long totalMergeTime = 0;
+        long count = 0;
+
+        for (PullRequest pr : pullRequests) {
+            if (pr.getMergedAt() != null) {
+                long duration = pr.getMergedAt().getTime() - pr.getCreatedAt().getTime();
+                totalMergeTime += duration;
+                count++;
+            }
+        }
+
+        return (count > 0) ? TimeUnit.MILLISECONDS.toHours(totalMergeTime) / (double) count : 0;
+    }
+
+
+    public Double calculateAverageCommentsPerPullRequest(QGetRepository qGetRepository) {
+        String owner = qGetRepository.getRepoOwner();
+        String repoName = qGetRepository.getRepoName();
+
+        Optional<Repository> optRepository = repositoryService.getRepository(owner, repoName);
+
+        if (optRepository.isEmpty()) {
+            log.error("Repository {}/{} not found.", owner, repoName);
+            throw new RepositoryNotFoundException();
+        }
+
+        Repository repository = optRepository.get();
+        Set<PullRequest> pullRequests = pullRequestRepository.findAllByRepository(repository);
+        long totalComments = pullRequests.stream().mapToLong(PullRequest::getNumberOfComments).sum();
+        return pullRequests.isEmpty() ? 0 : (double) totalComments / pullRequests.size();
+    }
+
+
+
+    public Double calculateAveragePullRequestSize(QGetRepository qGetRepository) {
+
+        String owner = qGetRepository.getRepoOwner();
+        String repoName = qGetRepository.getRepoName();
+
+        Optional<Repository> optRepository = repositoryService.getRepository(owner, repoName);
+
+        if (optRepository.isEmpty()) {
+            log.error("Repository {}/{} not found.", owner, repoName);
+            throw new RepositoryNotFoundException();
+        }
+
+        Repository repository = optRepository.get();
+        Set<PullRequest> pullRequests = pullRequestRepository.findAllByRepository(repository);
+        long totalSize = pullRequests.stream().mapToLong(PullRequest::getSize).sum();
+        return pullRequests.isEmpty() ? 0 : (double) totalSize / pullRequests.size();
+    }
+
+    public Double calculateReviewCoverage(QGetRepository qGetRepository) {
+        String owner = qGetRepository.getRepoOwner();
+        String repoName = qGetRepository.getRepoName();
+
+        Optional<Repository> optRepository = repositoryService.getRepository(owner, repoName);
+
+        if (optRepository.isEmpty()) {
+            log.error("Repository {}/{} not found.", owner, repoName);
+            throw new RepositoryNotFoundException();
+        }
+
+        Repository repository = optRepository.get();
+        Set<PullRequest> pullRequests = pullRequestRepository.findAllByRepository(repository);
+        long reviewedCount = pullRequests.stream().filter(PullRequest::getReviewed).count();
+        return pullRequests.isEmpty() ? 0 : 100.0 * reviewedCount / pullRequests.size();
     }
 
 }

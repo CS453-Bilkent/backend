@@ -3,9 +3,12 @@ package com.bilkent.devinsight.controller;
 import com.bilkent.devinsight.entity.Commit;
 import com.bilkent.devinsight.entity.Issue;
 import com.bilkent.devinsight.entity.PullRequest;
+import com.bilkent.devinsight.entity.Repository;
 import com.bilkent.devinsight.request.QGetRepository;
 import com.bilkent.devinsight.request.QGithubScrape;
+import com.bilkent.devinsight.response.RCommitFrequency;
 import com.bilkent.devinsight.response.RFileCommitRank;
+import com.bilkent.devinsight.response.RMultipleCommits;
 import com.bilkent.devinsight.response.struct.ApiResponse;
 import com.bilkent.devinsight.service.CommitService;
 import com.bilkent.devinsight.service.IssueService;
@@ -16,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -26,9 +30,23 @@ public class CommitController {
 
     private final CommitService commitService;
 
-    @GetMapping(path="/file-rankings")
-    public ResponseEntity<List<RFileCommitRank>> getFileCommitRankings() {
-        return null;
+
+    @GetMapping("commit-frequency/{repoOwner}/{repoName}")
+    public ResponseEntity<ApiResponse<RCommitFrequency>> getCommitFrequency(
+            @PathVariable("repoOwner") String repoOwner,
+            @PathVariable("repoName") String repoName) {
+        QGetRepository qGetRepository = QGetRepository.builder()
+                .repoOwner(repoOwner)
+                .repoName(repoName)
+                .build();
+        RCommitFrequency files = commitService.analyzeCommitPatterns(qGetRepository);
+
+        return ResponseEntity.ok(
+                ApiResponse.<RCommitFrequency>builder()
+                        .data(files)
+                        .status(HttpStatus.OK.value())
+                        .message("Successfully fetched commit frequency")
+                        .build());
     }
 
     @GetMapping("/{repoOwner}/{repoName}")
@@ -43,6 +61,19 @@ public class CommitController {
 
         return ResponseEntity.ok(
                 ApiResponse.<Set<Commit>>builder()
+                        .data(issues)
+                        .status(HttpStatus.OK.value())
+                        .message("Successfully fetched commits")
+                        .build());
+    }
+
+
+    @GetMapping("multiple")
+    public ResponseEntity<ApiResponse<Set<RMultipleCommits>>> getMultipleRepositories() {
+        Set<RMultipleCommits> issues = commitService.getCommitsForUser();
+
+        return ResponseEntity.ok(
+                ApiResponse.<Set<RMultipleCommits>>builder()
                         .data(issues)
                         .status(HttpStatus.OK.value())
                         .message("Successfully fetched commits")

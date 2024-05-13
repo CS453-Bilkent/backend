@@ -5,9 +5,12 @@ import com.bilkent.devinsight.exception.GithubConnectionException;
 import com.bilkent.devinsight.exception.RepositoryNotFoundException;
 import com.bilkent.devinsight.exception.SomethingWentWrongException;
 import com.bilkent.devinsight.repository.CommitRepository;
+import com.bilkent.devinsight.repository.RepositoryRepository;
 import com.bilkent.devinsight.repository.UserRepositoryRelRepository;
 import com.bilkent.devinsight.request.QGetRepository;
 import com.bilkent.devinsight.request.QGithubScrape;
+import com.bilkent.devinsight.response.RCommitFrequency;
+import com.bilkent.devinsight.response.RMultipleCommits;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +19,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -31,6 +36,7 @@ public class CommitService {
     // Repositories
     private final CommitRepository commitRepository;
     private final UserRepositoryRelRepository userRepositoryRelRepository;
+    private final RepositoryRepository repositoryRepository;
 
 
     // Services
@@ -40,6 +46,30 @@ public class CommitService {
     private final AuthService authService;
     private final FileService fileService;
 
+
+    public Set<RMultipleCommits> getCommitsForUser() {
+
+        User user = authService.getCurrentUserEntity();
+        // Select max 5 repositories
+        Set<Repository> repositories = user.getRepositories().stream()
+                .map(UserRepositoryRel::getRepository)
+                .limit(5)
+                .collect(Collectors.toSet());
+
+
+        Set<RMultipleCommits> multipleCommitsSet = new HashSet<>();
+
+        repositories.forEach(repository -> {
+            Set<Commit> repositoryCommits = commitRepository.findAllByRepository(repository);
+            RMultipleCommits rMultipleCommits = RMultipleCommits.builder()
+                    .repository(repository)
+                    .commits(repositoryCommits)
+                    .build();
+            multipleCommitsSet.add(rMultipleCommits);
+        });
+
+        return multipleCommitsSet;
+    }
 
     public Set<Commit> getCommits(QGetRepository qGetRepository) {
         String owner = qGetRepository.getRepoOwner();
@@ -105,7 +135,7 @@ public class CommitService {
         final int[] index = {0};
         // Fetch and save commits
         ghCommits.forEach(ghCommit -> {
-            if (index[0] >= 30) {
+            if (index[0] >= 100) {
                 return;
             }
             Commit commit = parseGHCommit(ghCommit, repository);
@@ -204,6 +234,42 @@ public class CommitService {
 //        repositoryRepository.save(repository);
 
         return commit;
+    }
+
+
+
+    public RCommitFrequency analyzeCommitPatterns(QGetRepository qGetRepository) {
+
+        String owner = qGetRepository.getRepoOwner();
+        String repoName = qGetRepository.getRepoName();
+
+        log.info("Analyzing commit patterns for {}/{}", owner, repoName);
+
+        Optional<Repository> optRepository = repositoryService.getRepository(owner, repoName);
+
+        if (optRepository.isEmpty()) {
+            log.error("Repository {}/{} not found.", owner, repoName);
+            throw new RepositoryNotFoundException();
+        }
+
+        Repository repository = optRepository.get();
+
+        Set<Commit> commits = commitRepository.findAllByRepository(repository);
+
+        Map<String, Long> dayFrequency = commits.stream()
+                .collect(Collectors.groupingBy(
+                        commit -> new SimpleDateFormat("EEEE", Locale.ENGLISH).format(commit.getCommitTime()),
+                        Collectors.counting()));
+
+        Map<String, Long> timeFrequency = commits.stream()
+                .collect(Collectors.groupingBy(
+                        commit -> new SimpleDateFormat("HH:00").format(commit.getCommitTime()),
+                        Collectors.counting()));
+
+        return RCommitFrequency.builder()
+                .dayFrequency(dayFrequency)
+                .timeFrequency(timeFrequency)
+                .build();
     }
 
 }
