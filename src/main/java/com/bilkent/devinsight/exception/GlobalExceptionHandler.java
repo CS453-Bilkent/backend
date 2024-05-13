@@ -18,51 +18,58 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ApiResponse<Void>> handleServiceExceptions(BaseException exception) {
-        log.error("An exception occurred " + exception.getMessage());
+        log.error("An exception occurred " + exception);
 
         return createErrorResponse(exception.getHttpStatus(), exception.getMessage());
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Void>> handleUserAlreadyExistsExceptions(UserAlreadyExistsException exception) {
-        log.error("An exception occurred " + exception.getMessage());
+        log.error("An exception occurred " + exception);
 
         return createErrorResponse(exception.getHttpStatus(), exception.getMessage());
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleUserNotFoundExceptions(UserNotFoundException exception) {
-        log.error("An exception occurred " + exception.getMessage());
+        log.error("An exception occurred " + exception);
 
         return createErrorResponse(exception.getHttpStatus(), exception.getMessage());
     }
 
     @ExceptionHandler(WrongPasswordException.class)
     public ResponseEntity<ApiResponse<Void>> handleWrongPasswordExceptions(WrongPasswordException exception) {
-        log.error("An exception occurred " + exception.getMessage());
+        log.error("An exception occurred " + exception);
 
         return createErrorResponse(exception.getHttpStatus(), exception.getMessage());
     }
 
     @ExceptionHandler(SomethingWentWrongException.class)
     public ResponseEntity<ApiResponse<Void>> handleWrongPasswordExceptions(SomethingWentWrongException exception) {
-        log.error("An exception occurred " + exception.getMessage());
+        log.error("An exception occurred " + exception);
 
         return createErrorResponse(exception.getHttpStatus(), exception.getMessage());
     }
 
     @ExceptionHandler(GithubConnectionException.class)
     public ResponseEntity<ApiResponse<Void>> handleWrongPasswordExceptions(GithubConnectionException exception) {
-        log.error("An exception occurred " + exception.getMessage());
+        log.error("An exception occurred " + exception);
 
         return createErrorResponse(exception.getHttpStatus(), exception.getMessage());
     }
 
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<ApiResponse<Void>> handleWrongPasswordExceptions(ExpiredJwtException exception) {
-        log.error("An exception occurred " + exception.getMessage());
-
+        log.error("An exception occurred " + exception);
         return createErrorResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
+    }
+
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<Void>> handleWrongPasswordExceptions(RuntimeException exception) {
+        log.error("An exception occurred " + exception);
+
+        return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
     }
 
 

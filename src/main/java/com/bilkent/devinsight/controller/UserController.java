@@ -23,7 +23,6 @@ public class UserController {
 
     private final UserService userService;
 
-//    @RequiredRole(value = {UserRole.REGISTERED_USER, UserRole.ADMIN})
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, path="change-email/request")
     public ResponseEntity<ApiResponse<Void>> sendChangeEmailCode(@Valid @RequestBody QChangeEmail qChangeEmail) {
         userService.sendChangeEmailCode(qChangeEmail);

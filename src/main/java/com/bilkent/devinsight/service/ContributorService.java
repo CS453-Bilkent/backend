@@ -2,9 +2,12 @@ package com.bilkent.devinsight.service;
 
 import com.bilkent.devinsight.entity.*;
 import com.bilkent.devinsight.exception.GithubConnectionException;
+import com.bilkent.devinsight.exception.RepositoryNotFoundException;
 import com.bilkent.devinsight.exception.SomethingWentWrongException;
 import com.bilkent.devinsight.repository.*;
+import com.bilkent.devinsight.request.QGetRepository;
 import com.bilkent.devinsight.request.QGithubScrape;
+import com.bilkent.devinsight.response.RDeveloperEffectiveness;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.*;
@@ -16,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -29,12 +33,44 @@ public class ContributorService {
     private String githubToken;
 
     private final ContributorRepository contributorRepository;
+    private final UserRepositoryRelRepository userRepositoryRelRepository;
+
     private final RepositoryService repositoryService;
+    private final AuthService authService;
+
+    public Set<Contributor> getContributors(QGetRepository qGetRepository) {
+        String owner = qGetRepository.getRepoOwner();
+        String repoName = qGetRepository.getRepoName();
+
+        Optional<Repository> optRepository = repositoryService.getRepository(owner, repoName);
+
+        if (optRepository.isEmpty()) {
+            log.error("Repository {}/{} not found.", owner, repoName);
+            throw new RepositoryNotFoundException();
+        }
+
+        Repository repository = optRepository.get();
+
+        return contributorRepository.findAllByRepository(repository);
+    }
 
     public Set<Contributor> scrapeContributors(QGithubScrape qGithubScrape) {
         String owner = qGithubScrape.getRepoOwner();
         String repoName = qGithubScrape.getRepoName();
         Repository repository = repositoryService.getOrCreateRepository(owner, repoName);
+
+        User user = authService.getCurrentUserEntity();
+
+        UserRepositoryRel userRepositoryRel = UserRepositoryRel.builder()
+                .repository(repository)
+                .build();
+
+        userRepositoryRel = userRepositoryRelRepository.save(userRepositoryRel);
+        Set<UserRepositoryRel> userRepositories = user.getRepositories();
+        userRepositories.add(userRepositoryRel);
+        user.setRepositories(userRepositories);
+        authService.save(user);
+
         GHRepository ghRepository = null;
 
         try {
@@ -82,20 +118,26 @@ public class ContributorService {
             log.error("Could not fetch contributor details.", e);
             throw new SomethingWentWrongException("Could not fetch contributor details.");
         }
+        log.info("Contributor: " + name + " " + email + " " + url + " " + avatarUrl);
 
         Optional<Contributor> optContributor = contributorRepository.findByEmail(email);
+        log.info("Optional contributor: " + optContributor);
         Contributor contributor;
 
+
         if (optContributor.isPresent()) {
+            log.info("Contributor already exists");
             contributor = optContributor.get();
             contributor.setName(name);
             contributor.setUrl(url);
             contributor.setAvatarUrl(avatarUrl);
         } else {
+            log.info("Contributor does not exist");
             contributor = Contributor.builder()
                     .name(name)
                     .avatarUrl(avatarUrl)
                     .url(url)
+                    .repository(repository)
                     .email(email)
                     .build();
         }
@@ -113,6 +155,49 @@ public class ContributorService {
 //        repositoryRepository.save(repository);
 
         return contributor;
+    }
+
+    public Set<RDeveloperEffectiveness> calculateDeveloperEffectiveness(QGetRepository qGetRepository) {
+        String owner = qGetRepository.getRepoOwner();
+        String repoName = qGetRepository.getRepoName();
+
+        Optional<Repository> optRepository = repositoryService.getRepository(owner, repoName);
+
+        if (optRepository.isEmpty()) {
+            log.error("Repository {}/{} not found.", owner, repoName);
+            throw new RepositoryNotFoundException();
+        }
+
+        Repository repository = optRepository.get();
+
+        Set<Contributor> contributors = contributorRepository.findAllByRepository(repository); // Assumes a method to fetch all contributors
+        return contributors.stream().map(this::mapToDeveloperEffectiveness)
+                .collect(Collectors.toSet());
+    }
+
+    private RDeveloperEffectiveness mapToDeveloperEffectiveness(Contributor contributor) {
+        long commitCount = contributor.getCommits() != null ? contributor.getCommits().size() : 0;
+        long closedIssuesCount = calculateClosedIssues(contributor); // Implement this based on your domain logic
+        long bugsFixed = calculateBugsFixed(contributor); // Implement this based on your domain logic
+
+        return RDeveloperEffectiveness.builder()
+                .contributor(contributor)
+                .commitCount(commitCount)
+                .closedIssuesCount(closedIssuesCount)
+                .bugsFixed(bugsFixed)
+                .build();
+    }
+
+    // Placeholder for closed issues calculation
+    private long calculateClosedIssues(Contributor contributor) {
+        // Custom logic to calculate the number of closed issues
+        return 0; // Return actual value
+    }
+
+    // Placeholder for bugs fixed calculation
+    private long calculateBugsFixed(Contributor contributor) {
+        // Custom logic to calculate the number of bugs fixed
+        return 0; // Return actual value
     }
 
 }

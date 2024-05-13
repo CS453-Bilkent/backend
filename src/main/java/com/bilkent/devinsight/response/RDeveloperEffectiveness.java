@@ -23,8 +23,5 @@ public class RDeveloperEffectiveness {
     private Long closedIssuesCount;
 
     @NotNull
-    private Long codeStickiness;
-
-    @NotNull
     private Long bugsFixed;
 }

@@ -12,6 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
+
 
 @AllArgsConstructor
 @RestController
@@ -33,10 +35,24 @@ public class RepositoryController {
         );
     }
 
-    @GetMapping
-    public ResponseEntity<RProjectHealthMetrics> getMetrics() {
-//        return ResponseEntity.ok(service.getProjectHealthMetrics());
-        return null;
+    @GetMapping()
+    public ResponseEntity<ApiResponse<Set<Repository>>> getRepositories() {
+        Set<Repository> repository = repositoryService.getRepositories();
+        return ResponseEntity.ok(
+                ApiResponse.<Set<Repository>>builder()
+                        .data(repository)
+                        .message("Repositories fetched successfully")
+                        .status(HttpStatus.OK.value())
+                        .build()
+        );
     }
+
+
+
+//    @GetMapping
+//    public ResponseEntity<RProjectHealthMetrics> getMetrics() {
+////        return ResponseEntity.ok(service.getProjectHealthMetrics());
+//        return null;
+//    }
 
 }

@@ -37,7 +37,6 @@ public class DeveloperService {
                             .contributor(contributor)
                             .commitCount(commitCount)
                             .closedIssuesCount(closedIssuesCount)
-                            .codeStickiness(codeStickiness)
                             .bugsFixed(bugsFixed)
                             .build();
 

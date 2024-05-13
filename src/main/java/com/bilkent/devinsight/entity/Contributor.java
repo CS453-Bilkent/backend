@@ -35,4 +35,14 @@ public class Contributor extends BaseEntity {
     @NotNull
     private String email;
 
+    @OneToMany(mappedBy = "contributor")
+    private Set<Commit> commits = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "repository_id")
+    private Repository repository;
+
+    @ManyToMany(mappedBy = "requestedReviewers")
+    private Set<PullRequest> pullRequestReviewers = new HashSet<>();
+
 }

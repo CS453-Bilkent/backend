@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface CommitRepository extends JpaRepository<Commit, Long> {
     List<Commit> findAllByChangedFilesContains(File file);
@@ -16,4 +17,7 @@ public interface CommitRepository extends JpaRepository<Commit, Long> {
     Long countByContributor(Contributor contributor);
 
     Optional<Commit> findByHashAndRepository(String hash, Repository repository);
+
+    Set<Commit> findAllByRepository(Repository repository);
+
 }

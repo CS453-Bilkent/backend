@@ -32,12 +32,14 @@ public class Commit extends BaseEntity {
     private Date timestamp;
 
     @NotNull
+    @Column(columnDefinition = "TEXT")
     private String hash;
 
     @NotNull
     private Date commitTime;
 
     @ManyToOne
+    @JoinColumn(name = "contributor_id")
     private Contributor contributor;
 
     @ManyToOne

@@ -28,6 +28,18 @@ public class RepositoryService {
 
     private final AuthService authService;
 
+
+    public Optional<Repository> getRepository(String owner, String repoName) {
+        return repositoryRepository.findByNameAndOwner(repoName, owner);
+    }
+
+    public Set<Repository> getRepositories() {
+        User user = authService.getCurrentUserEntity();
+        Set<Repository> repositories = new HashSet<>();
+        user.getRepositories().forEach(userRepositoryRel -> repositories.add(userRepositoryRel.getRepository()));
+        return repositories;
+    }
+
     public Repository addRepository(QAddRepository qAddRepository) {
 
         User user = authService.getCurrentUserEntity();
@@ -54,11 +66,14 @@ public class RepositoryService {
     public Repository getOrCreateRepository(String owner, String repoName) {
         Optional<Repository> optRepository = repositoryRepository.findByNameAndOwner(repoName, owner);
 
+        log.info("Repository {}/{} searching.", owner, repoName);
         Repository repository;
 
         if (optRepository.isPresent()) {
+            log.info("Repository {}/{} found.", owner, repoName);
             repository = optRepository.get();
         } else {
+            log.info("Repository {}/{} not found. Creating new repository.", owner, repoName);
             repository = Repository.builder()
                     .issues(new HashSet<>())
                     .pullRequests(new HashSet<>())

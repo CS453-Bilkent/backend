@@ -60,10 +60,14 @@ public class PullRequest extends BaseEntity {
     @JoinColumn(name = "repository_id")
     private Repository repository;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(
+            name = "pull_requests_requested_reviewers",
+            joinColumns = @JoinColumn(name = "pull_requests_id"),
+            inverseJoinColumns = @JoinColumn(name = "contributor_id"))
     private Set<Contributor> requestedReviewers = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     private Set<Contributor> assignees = new HashSet<>();
 
 }

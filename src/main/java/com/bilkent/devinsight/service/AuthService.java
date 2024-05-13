@@ -59,6 +59,9 @@ public class AuthService {
 
     private final MailService mailService;
 
+    public User save(User user) {
+        return userRepository.save(user);
+    }
 
     public ResUserToken login(QLogin user) throws BaseException {
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());

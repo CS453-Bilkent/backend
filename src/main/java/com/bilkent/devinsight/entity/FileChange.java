@@ -33,6 +33,7 @@ public class FileChange {
     private Integer deletions;
 
     @NotNull
+    @Column(columnDefinition = "TEXT")
     private String patch;
 
     @NotNull
@@ -47,7 +48,10 @@ public class FileChange {
     @NotNull
     private String rawUrl;
 
+    @NotNull
+    private String sha;
+
     @ManyToOne
-    @JoinColumn(name = "file_id")
+    @JoinColumn(name = "file_id", nullable = false)
     private File file;
 }

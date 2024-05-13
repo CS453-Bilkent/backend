@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -37,6 +38,10 @@ public class File extends BaseEntity {
     @JoinColumn(name = "repository_id")
     private Repository repository;
 
-    @OneToMany
-    private List<FileChange> fileChanges;
+    @OneToMany(
+            mappedBy = "file",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private Set<FileChange> fileChanges;
 }

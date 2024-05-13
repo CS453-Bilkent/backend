@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -12,7 +14,7 @@ import lombok.*;
 public class RFileCommitRank {
 
     @NotNull
-    private Long fileId;
+    private UUID fileId;
 
     @NotEmpty
     private String fileName;

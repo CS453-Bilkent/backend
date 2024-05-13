@@ -2,8 +2,10 @@ package com.bilkent.devinsight.service;
 
 import com.bilkent.devinsight.entity.*;
 import com.bilkent.devinsight.exception.GithubConnectionException;
+import com.bilkent.devinsight.exception.RepositoryNotFoundException;
 import com.bilkent.devinsight.exception.SomethingWentWrongException;
 import com.bilkent.devinsight.repository.*;
+import com.bilkent.devinsight.request.QGetRepository;
 import com.bilkent.devinsight.request.QGithubScrape;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,16 +32,49 @@ public class IssueService {
 
     // Repositories
     private final IssueRepository issueRepository;
+    private final UserRepositoryRelRepository userRepositoryRelRepository;
 
     // Services
     private final RepositoryService repositoryService;
     private final ContributorService contributorService;
+    private final AuthService authService;
+
+
+    public Set<Issue> getIssues(QGetRepository qGetRepository) {
+        String owner = qGetRepository.getRepoOwner();
+        String repoName = qGetRepository.getRepoName();
+
+        log.info("Getting issues for {}/{}", owner, repoName);
+
+        Optional<Repository> optRepository = repositoryService.getRepository(owner, repoName);
+
+        if (optRepository.isEmpty()) {
+            log.error("Repository {}/{} not found.", owner, repoName);
+            throw new RepositoryNotFoundException();
+        }
+
+        Repository repository = optRepository.get();
+        return issueRepository.findAllByRepository(repository);
+    }
 
 
     public Set<Issue> scrapeIssues(QGithubScrape qGithubScrape) {
         String owner = qGithubScrape.getRepoOwner();
         String repoName = qGithubScrape.getRepoName();
         Repository repository = repositoryService.getOrCreateRepository(owner, repoName);
+
+        User user = authService.getCurrentUserEntity();
+
+        UserRepositoryRel userRepositoryRel = UserRepositoryRel.builder()
+                .repository(repository)
+                .build();
+
+        userRepositoryRel = userRepositoryRelRepository.save(userRepositoryRel);
+        Set<UserRepositoryRel> userRepositories = user.getRepositories();
+        userRepositories.add(userRepositoryRel);
+        user.setRepositories(userRepositories);
+        authService.save(user);
+
         GHRepository ghRepository = null;
 
         try {
