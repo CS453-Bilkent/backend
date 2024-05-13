@@ -70,4 +70,4 @@ jobs:
           docker stop devinsight-backend-dev
           docker rm devinsight-backend-dev
           cd /home/${{ secrets.SSH_USERNAME }}/devinsight-dev
-          docker-compose up -d
+          docker compose up -d
